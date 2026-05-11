@@ -1,61 +1,83 @@
-# Contribution guidelines
+# Contributing
 
-Contributing to this project should be as easy and transparent as possible, whether it's:
+Contributions are welcome — bug reports, fixes, documentation improvements.
+This is a personal project, but it tries to hold itself to public-quality
+standards.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
+## Local development setup
 
-## Github is used for everything
+The toolchain is [uv](https://docs.astral.sh/uv/) + [ruff](https://docs.astral.sh/ruff/)
++ [ty](https://docs.astral.sh/ty/). All three are managed via the
+`[dependency-groups]` in `pyproject.toml`; no system pip needed.
 
-Github is used to host code, to track issues and feature requests, as well as accept pull requests.
+```bash
+# 1. Install uv (one-time)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-Pull requests are the best way to propose changes to the codebase.
+# 2. Sync the venv from uv.lock
+uv sync
 
-1. Fork the repo and create your branch from `main`.
-2. If you've changed something, update the documentation.
-3. Make sure your code lints (using `scripts/lint`).
-4. Test you contribution.
-5. Issue that pull request!
+# 3. Install pre-commit hooks
+uv run pre-commit install
+```
 
-## Any contributions you make will be under the MIT Software License
+Or run the bundled bootstrap:
 
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
+```bash
+scripts/setup
+```
 
-## Report bugs using Github's [issues](../../issues)
+For a step-by-step walk-through of running tests and exercising the
+integration in a real Home Assistant instance, see
+[docs/TESTING.md](./docs/TESTING.md).
 
-GitHub issues are used to track public bugs.
-Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
+## Common commands
 
-## Write bug reports with detail, background, and sample code
+| Command | What it does |
+|---|---|
+| `uv run pytest` | Run the full test suite |
+| `uv run pytest --cov` | … with coverage report |
+| `uv run ruff check` | Lint |
+| `uv run ruff format` | Format |
+| `uv run ty check` | Type-check |
+| `scripts/lint` | format + lint --fix + ty in one go |
+| `scripts/test` | pytest with coverage |
+| `scripts/develop` | Boot a dev Home Assistant with this integration loaded |
 
-**Great Bug Reports** tend to have:
+## Devcontainer
 
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can.
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+`.devcontainer.json` is set up for VS Code Dev Containers. It includes
+Python 3.14, uv, and the apt deps Home Assistant needs (ffmpeg, libturbojpeg,
+libpcap). On first open, `scripts/setup` runs automatically.
 
-People *love* thorough bug reports. I'm not even kidding.
+## Branching and PRs
 
-## Use a Consistent Coding Style
+1. Branch off `main`.
+2. Keep changes focused — one concern per PR.
+3. Update tests for any behavior change.
+4. Run `scripts/lint` and `uv run pytest` before opening the PR.
+5. CI must pass: `lint.yml`, `tests.yml`, hassfest, and HACS validation.
 
-Use [black](https://github.com/ambv/black) to make sure the code follows the style.
+## Type-checking caveat
 
-## Test your code modification
+`ty` is still in beta (0.0.x). If you hit a false positive or an unsupported
+language feature:
 
-This custom component is based on [integration_blueprint template](https://github.com/ludeeus/integration_blueprint).
+1. Try a `# ty: ignore[<rule>]` comment on the offending line.
+2. If that's not enough, open an issue describing the case — we'll either
+   work around it or fall back to mypy for the whole project.
 
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`configuration.yaml`](./config/configuration.yaml)
-file.
+## Reporting bugs
+
+Use [Issues](https://github.com/snoepkast/home-assistant-nl-rain-forecast/issues).
+Include:
+
+- Home Assistant version
+- Integration version
+- Relevant log lines (set `custom_components.nl_rain_forecast` to `debug`)
+- A minimal reproduction (e.g. coordinates that consistently misbehave)
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+By contributing you agree your contributions are licensed under the
+[MIT License](./LICENSE).

@@ -1,0 +1,11 @@
+{
+  "domain": "nl_rain_forecast",
+  "name": "NL Rain Forecast",
+  "codeowners": ["@snoepkast"],
+  "config_flow": true,
+  "documentation": "https://github.com/snoepkast/home-assistant-nl-rain-forecast",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/snoepkast/home-assistant-nl-rain-forecast/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

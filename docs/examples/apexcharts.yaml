@@ -1,0 +1,48 @@
+# ApexCharts area chart of the per-5-minute rain forecast.
+#
+# Replace `sensor.home_rain_forecast_buienradar` with the entity_id for your
+# location. Switch to `..._buienalarm` (or duplicate the series) for the
+# Buienalarm forecast.
+#
+# Requires the apexcharts-card resource:
+#   https://github.com/RomRider/apexcharts-card
+
+type: custom:apexcharts-card
+header:
+  title: Rain forecast
+  show: true
+  show_states: true
+graph_span: 2h
+span:
+  start: minute
+yaxis:
+  - id: mmph
+    min: 0
+    apex_config:
+      forceNiceScale: true
+      title:
+        text: mm/h
+series:
+  - entity: sensor.home_rain_forecast_buienradar
+    name: Buienradar
+    yaxis_id: mmph
+    type: area
+    stroke_width: 2
+    extend_to: false
+    data_generator: |
+      return entity.attributes.forecast.map(slot => [
+        new Date(slot.time).getTime(),
+        slot.value,
+      ]);
+  - entity: sensor.home_rain_forecast_buienalarm
+    name: Buienalarm
+    yaxis_id: mmph
+    type: area
+    stroke_width: 2
+    extend_to: false
+    opacity: 0.4
+    data_generator: |
+      return entity.attributes.forecast.map(slot => [
+        new Date(slot.time).getTime(),
+        slot.value,
+      ]);

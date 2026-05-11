@@ -1,0 +1,23 @@
+{
+    "success": true,
+    "source": "Buienalarm",
+    "name": "Test Location",
+    "country": "NL",
+    "temp": 14.2,
+    "delta": 300,
+    "start": 1714978800,
+    "start_human": "14:00",
+    "precip": [
+        0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0
+    ],
+    "levels": {
+        "light": 0.5,
+        "moderate": 2.0,
+        "heavy": 10.0,
+        "violent": 50.0
+    }
+}

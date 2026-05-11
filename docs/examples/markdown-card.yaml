@@ -1,0 +1,19 @@
+# A one-line Dutch summary using `next_rain_in_minutes` and
+# `next_dry_in_minutes` from the Buienradar sensor.
+#
+# Drop into any dashboard view.
+
+type: markdown
+content: |
+  {% set s = states.sensor.home_rain_forecast_buienradar %}
+  {% if s is none or s.state in ['unavailable', 'unknown'] %}
+    🌫️ Geen regenvoorspelling beschikbaar.
+  {% elif s.attributes.next_dry_in_minutes is not none %}
+    🌧️ Het regent nog **{{ s.attributes.next_dry_in_minutes }} min**
+    (nu {{ s.state }} mm/u).
+  {% elif s.attributes.next_rain_in_minutes is not none %}
+    ☔ Het regent over **{{ s.attributes.next_rain_in_minutes }} min**
+    (piek {{ s.attributes.peak_intensity }} mm/u).
+  {% else %}
+    ☀️ Het blijft droog de komende 2 uur.
+  {% endif %}

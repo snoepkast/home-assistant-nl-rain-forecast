@@ -1,4 +1,4 @@
-name: Lint
+name: Tests
 
 on:
   push:
@@ -9,8 +9,8 @@ on:
 permissions: {}
 
 jobs:
-  lint:
-    name: Ruff + ty
+  pytest:
+    name: pytest
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -24,11 +24,13 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      - name: Ruff lint
-        run: uv run ruff check .
+      - name: Run pytest
+        run: uv run pytest --cov --cov-report=xml --cov-report=term
 
-      - name: Ruff format
-        run: uv run ruff format --check .
-
-      - name: ty type-check
-        run: uv run ty check
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: ignore

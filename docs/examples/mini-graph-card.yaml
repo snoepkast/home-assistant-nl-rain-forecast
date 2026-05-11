@@ -1,0 +1,24 @@
+# Mini-graph-card showing the recent history of the *current* rain intensity
+# state — useful as a glanceable "is it raining now" indicator.
+#
+# Note: this graphs the sensor's state over time, not the per-5-min forecast.
+# For the forecast curve, use the apexcharts example.
+#
+# Requires:
+#   https://github.com/kalkih/mini-graph-card
+
+type: custom:mini-graph-card
+name: Rain intensity (current)
+icon: mdi:weather-pouring
+hours_to_show: 6
+points_per_hour: 12
+line_width: 3
+font_size: 75
+show:
+  labels: true
+  fill: fade
+entities:
+  - entity: sensor.home_rain_forecast_buienradar
+    name: Buienradar
+  - entity: sensor.home_rain_forecast_buienalarm
+    name: Buienalarm

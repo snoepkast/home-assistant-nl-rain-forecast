@@ -1,0 +1,44 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "NL Rain Forecast",
+                "description": "Configureer een locatie voor Nederlandse 5-minuten regenvoorspellingen.",
+                "data": {
+                    "location_name": "Naam locatie",
+                    "latitude": "Breedtegraad",
+                    "longitude": "Lengtegraad",
+                    "update_interval": "Update-interval (minuten)"
+                }
+            }
+        },
+        "error": {
+            "outside_netherlands": "De coördinaten liggen buiten Nederland.",
+            "api_unreachable": "Een van de regen-API's is niet bereikbaar. Probeer het later opnieuw.",
+            "unknown": "Er is een onbekende fout opgetreden."
+        },
+        "abort": {
+            "already_configured": "Een locatie met deze coördinaten is al geconfigureerd."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "NL Rain Forecast-opties",
+                "data": {
+                    "update_interval": "Update-interval (minuten)"
+                }
+            }
+        }
+    },
+    "entity": {
+        "sensor": {
+            "rain_forecast_buienradar": {
+                "name": "Regenvoorspelling (Buienradar)"
+            },
+            "rain_forecast_buienalarm": {
+                "name": "Regenvoorspelling (Buienalarm)"
+            }
+        }
+    }
+}

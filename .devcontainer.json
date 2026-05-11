@@ -1,5 +1,5 @@
 {
-    "name": "ludeeus/integration_blueprint",
+    "name": "snoepkast/home-assistant-nl-rain-forecast",
     "image": "mcr.microsoft.com/devcontainers/base:debian",
     "postCreateCommand": "scripts/setup",
     "forwardPorts": [
@@ -18,7 +18,8 @@
                 "github.vscode-pull-request-github",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
-                "ryanluker.vscode-coverage-gutters"
+                "ryanluker.vscode-coverage-gutters",
+                "tamasfe.even-better-toml"
             ],
             "settings": {
                 "files.eol": "\n",
@@ -29,6 +30,7 @@
                 "files.trimTrailingWhitespace": true,
                 "python.analysis.typeCheckingMode": "basic",
                 "python.analysis.autoImportCompletions": true,
+                "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
                 "[python]": {
                     "editor.defaultFormatter": "charliermarsh.ruff"
                 }
@@ -40,6 +42,7 @@
         "ghcr.io/devcontainers/features/python:1": {
             "version": "3.14"
         },
+        "ghcr.io/astral-sh/uv:1": {},
         "ghcr.io/devcontainers-extra/features/apt-packages:1": {
             "packages": "ffmpeg,libturbojpeg0,libpcap-dev"
         }
