@@ -5,9 +5,10 @@
 [![Tests](https://github.com/snoepkast/home-assistant-nl-rain-forecast/actions/workflows/tests.yml/badge.svg)](https://github.com/snoepkast/home-assistant-nl-rain-forecast/actions/workflows/tests.yml)
 
 A Home Assistant custom integration that exposes Dutch per-5-minute rain
-nowcasts from **Buienradar** and **Buienalarm** as native sensors with rich
-forecast attributes. No bundled Lovelace card — visualization is your choice
-(ApexCharts, mini-graph-card, or anything else).
+nowcasts from **Buienradar**, **Buienalarm**, and **Open-Meteo** as native
+sensors with rich forecast attributes. No bundled Lovelace card —
+visualization is your choice (ApexCharts, mini-graph-card, or anything
+else).
 
 ## Why
 
@@ -52,12 +53,13 @@ interval can be changed later via the **Configure** button on the integration.
 
 ## Sensors
 
-Two sensors per configured location:
+Three sensors per configured location:
 
-| Entity | Source |
-|---|---|
-| `sensor.<location>_rain_forecast_buienradar` | Buienradar nowcast (`gpsgadget.buienradar.nl`) |
-| `sensor.<location>_rain_forecast_buienalarm` | Buienalarm forecast (`cdn-secure.buienalarm.nl`) |
+| Entity | Source | Native cadence |
+|---|---|---|
+| `sensor.<location>_rain_forecast_buienradar` | Buienradar nowcast (`gpsgadget.buienradar.nl`) | 5 min |
+| `sensor.<location>_rain_forecast_buienalarm` | Buienalarm forecast (`cdn-secure.buienalarm.nl`) | 5 min |
+| `sensor.<location>_rain_forecast_open_meteo` | Open-Meteo (`api.open-meteo.com`) | 15 min, linearly interpolated to 5 min |
 
 ### Sensor state and attributes
 

@@ -19,7 +19,15 @@ from __future__ import annotations
 from ._base import Source, SourceClient
 from .buienalarm import SOURCE as BUIENALARM
 from .buienradar import SOURCE as BUIENRADAR
+from .open_meteo import SOURCE as OPEN_METEO
 
-SOURCES: tuple[Source, ...] = (BUIENRADAR, BUIENALARM)
+SOURCES: tuple[Source, ...] = (BUIENRADAR, BUIENALARM, OPEN_METEO)
 
-__all__ = ["BUIENALARM", "BUIENRADAR", "SOURCES", "Source", "SourceClient"]
+__all__ = [
+    "BUIENALARM",
+    "BUIENRADAR",
+    "OPEN_METEO",
+    "SOURCES",
+    "Source",
+    "SourceClient",
+]

@@ -1,0 +1,27 @@
+{
+    "latitude": 52.375,
+    "longitude": 4.9,
+    "generationtime_ms": 0.1,
+    "utc_offset_seconds": 0,
+    "timezone": "GMT",
+    "timezone_abbreviation": "GMT",
+    "elevation": 5.0,
+    "minutely_15_units": {
+        "time": "iso8601",
+        "precipitation": "mm"
+    },
+    "minutely_15": {
+        "time": [
+            "2026-05-08T14:00",
+            "2026-05-08T14:15",
+            "2026-05-08T14:30",
+            "2026-05-08T14:45",
+            "2026-05-08T15:00",
+            "2026-05-08T15:15",
+            "2026-05-08T15:30",
+            "2026-05-08T15:45",
+            "2026-05-08T16:00"
+        ],
+        "precipitation": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    }
+}

@@ -38,6 +38,9 @@
             },
             "rain_forecast_buienalarm": {
                 "name": "Rain forecast (Buienalarm)"
+            },
+            "rain_forecast_open_meteo": {
+                "name": "Rain forecast (Open-Meteo)"
             }
         }
     }

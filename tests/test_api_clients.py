@@ -23,11 +23,17 @@ from custom_components.nl_rain_forecast.sources.buienradar import (
     BuienradarClient,
 )
 from custom_components.nl_rain_forecast.sources.buienradar.const import URL as BUIENRADAR_URL
+from custom_components.nl_rain_forecast.sources.open_meteo import (
+    OpenMeteoAPIError,
+    OpenMeteoClient,
+)
+from custom_components.nl_rain_forecast.sources.open_meteo.const import URL as OPEN_METEO_URL
 
 from .conftest import load_fixture
 
 BUIENRADAR_PATTERN = re.compile(re.escape(BUIENRADAR_URL) + r"\?.*")
 BUIENALARM_PATTERN = re.compile(re.escape(BUIENALARM_URL) + r"\?.*")
+OPEN_METEO_PATTERN = re.compile(re.escape(OPEN_METEO_URL) + r"\?.*")
 
 LAT, LON = 52.3676, 4.9041
 
@@ -161,3 +167,66 @@ async def test_buienalarm_round_trips_real_fixture_payload(session):
         client = BuienalarmClient(session)
         forecast = await client.async_get_forecast(LAT, LON)
     assert forecast.source == "buienalarm"
+
+
+# --- Open-Meteo ----------------------------------------------------------
+
+
+async def test_open_meteo_happy_path(session):
+    with aioresponses() as mocked:
+        mocked.get(
+            OPEN_METEO_PATTERN,
+            status=200,
+            body=load_fixture("open_meteo_active.json"),
+            content_type="application/json",
+        )
+        client = OpenMeteoClient(session)
+        forecast = await client.async_get_forecast(LAT, LON)
+    # 9 upstream slots * 15min -> 25 interpolated 5-min slots.
+    assert len(forecast.slots) == 25
+    assert forecast.peak_intensity == 2.0
+
+
+async def test_open_meteo_http_500_raises(session):
+    with aioresponses() as mocked:
+        mocked.get(OPEN_METEO_PATTERN, status=500, body="boom")
+        client = OpenMeteoClient(session)
+        with pytest.raises(APIResponseError):
+            await client.async_get_forecast(LAT, LON)
+
+
+async def test_open_meteo_garbage_json_raises(session):
+    with aioresponses() as mocked:
+        mocked.get(
+            OPEN_METEO_PATTERN,
+            status=200,
+            payload={"unrelated": "object"},
+            content_type="application/json",
+        )
+        client = OpenMeteoClient(session)
+        with pytest.raises(OpenMeteoAPIError):
+            await client.async_get_forecast(LAT, LON)
+
+
+async def test_open_meteo_transport_error(session):
+    with aioresponses() as mocked:
+        mocked.get(
+            OPEN_METEO_PATTERN,
+            exception=aiohttp.ClientConnectionError("transport down"),
+        )
+        client = OpenMeteoClient(session)
+        with pytest.raises(OpenMeteoAPIError):
+            await client.async_get_forecast(LAT, LON)
+
+
+async def test_open_meteo_non_json_body_raises(session):
+    with aioresponses() as mocked:
+        mocked.get(
+            OPEN_METEO_PATTERN,
+            status=200,
+            body="<html>maintenance</html>",
+            content_type="text/html",
+        )
+        client = OpenMeteoClient(session)
+        with pytest.raises(RainForecastError):
+            await client.async_get_forecast(LAT, LON)
