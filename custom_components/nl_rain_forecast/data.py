@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
-    from .api import BuienalarmClient, BuienradarClient
     from .coordinator import NLRainForecastCoordinator
+    from .sources import Source, SourceClient
 
     type NLRainForecastConfigEntry = ConfigEntry[NLRainForecastRuntimeData]
 
@@ -19,8 +19,7 @@ class NLRainForecastRuntimeData:
     """Lives on ``ConfigEntry.runtime_data`` for the lifetime of the entry."""
 
     coordinator: NLRainForecastCoordinator
-    buienradar: BuienradarClient
-    buienalarm: BuienalarmClient
+    clients: dict[Source, SourceClient]
     location_name: str
     latitude: float
     longitude: float

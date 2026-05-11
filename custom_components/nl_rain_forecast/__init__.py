@@ -2,7 +2,8 @@
 NL Rain Forecast integration.
 
 Custom integration that exposes Dutch per-5-minute rain nowcast data
-(Buienradar + Buienalarm) as Home Assistant sensors.
+from multiple sources (currently Buienradar + Buienalarm) as Home
+Assistant sensors.
 
 https://github.com/snoepkast/home-assistant-nl-rain-forecast
 """
@@ -15,7 +16,6 @@ from typing import TYPE_CHECKING
 from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE, Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import BuienalarmClient, BuienradarClient
 from .const import (
     CONF_LOCATION_NAME,
     CONF_UPDATE_INTERVAL,
@@ -24,11 +24,13 @@ from .const import (
 )
 from .coordinator import NLRainForecastCoordinator
 from .data import NLRainForecastRuntimeData
+from .sources import SOURCES
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from .data import NLRainForecastConfigEntry
+    from .sources import Source, SourceClient
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
@@ -47,16 +49,14 @@ async def async_setup_entry(
     )
 
     session = async_get_clientsession(hass)
-    integration_version = entry.data.get("integration_version", "0.1.0")
-
-    buienradar = BuienradarClient(session)
-    buienalarm = BuienalarmClient(session, version=integration_version)
+    clients: dict[Source, SourceClient] = {
+        source: source.client_factory(session) for source in SOURCES
+    }
 
     coordinator = NLRainForecastCoordinator(
         hass,
         config_entry=entry,
-        buienradar=buienradar,
-        buienalarm=buienalarm,
+        clients=clients,
         latitude=latitude,
         longitude=longitude,
         update_interval=timedelta(minutes=int(interval_minutes)),
@@ -64,19 +64,19 @@ async def async_setup_entry(
 
     entry.runtime_data = NLRainForecastRuntimeData(
         coordinator=coordinator,
-        buienradar=buienradar,
-        buienalarm=buienalarm,
+        clients=clients,
         location_name=location_name,
         latitude=latitude,
         longitude=longitude,
     )
 
     LOGGER.info(
-        "Setting up NL Rain Forecast for %s (%.4f, %.4f), update every %s min",
+        "Setting up NL Rain Forecast for %s (%.4f, %.4f), update every %s min, sources=%s",
         location_name,
         latitude,
         longitude,
         interval_minutes,
+        [source.id for source in SOURCES],
     )
 
     await coordinator.async_config_entry_first_refresh()

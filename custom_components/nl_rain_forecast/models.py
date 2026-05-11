@@ -31,14 +31,6 @@ class APIParseError(RainForecastError):
     """Upstream payload could not be parsed."""
 
 
-class BuienradarAPIError(RainForecastError):
-    """Generic Buienradar API error."""
-
-
-class BuienalarmAPIError(RainForecastError):
-    """Generic Buienalarm API error."""
-
-
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -62,7 +54,7 @@ class Forecast:
     """A complete forecast for one location and one source."""
 
     source: str
-    """Source identifier, e.g. ``buienradar`` or ``buienalarm``."""
+    """Source identifier, matching :attr:`sources.Source.id`."""
 
     fetched_at: datetime
     """When the data was fetched (timezone-aware)."""

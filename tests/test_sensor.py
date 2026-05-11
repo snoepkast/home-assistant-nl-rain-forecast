@@ -12,11 +12,8 @@ from custom_components.nl_rain_forecast.const import (
     CONF_UPDATE_INTERVAL,
     DOMAIN,
 )
-from custom_components.nl_rain_forecast.models import (
-    BuienalarmAPIError,
-    Forecast,
-    build_slots,
-)
+from custom_components.nl_rain_forecast.models import Forecast, build_slots
+from custom_components.nl_rain_forecast.sources.buienalarm import BuienalarmAPIError
 
 from .test_buienradar_parser import _fetched_at as _radar_now
 
@@ -59,11 +56,11 @@ async def test_sensors_created_with_state_and_attributes(hass):
 
     with (
         patch(
-            "custom_components.nl_rain_forecast.api.BuienradarClient.async_get_forecast",
+            "custom_components.nl_rain_forecast.sources.buienradar.BuienradarClient.async_get_forecast",
             new=AsyncMock(return_value=_radar_forecast()),
         ),
         patch(
-            "custom_components.nl_rain_forecast.api.BuienalarmClient.async_get_forecast",
+            "custom_components.nl_rain_forecast.sources.buienalarm.BuienalarmClient.async_get_forecast",
             new=AsyncMock(return_value=_alarm_forecast()),
         ),
     ):
@@ -90,11 +87,11 @@ async def test_partial_failure_keeps_surviving_source_available(hass):
 
     with (
         patch(
-            "custom_components.nl_rain_forecast.api.BuienradarClient.async_get_forecast",
+            "custom_components.nl_rain_forecast.sources.buienradar.BuienradarClient.async_get_forecast",
             new=AsyncMock(return_value=_radar_forecast()),
         ),
         patch(
-            "custom_components.nl_rain_forecast.api.BuienalarmClient.async_get_forecast",
+            "custom_components.nl_rain_forecast.sources.buienalarm.BuienalarmClient.async_get_forecast",
             new=AsyncMock(side_effect=BuienalarmAPIError("down")),
         ),
     ):

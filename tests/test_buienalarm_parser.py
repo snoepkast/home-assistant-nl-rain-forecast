@@ -7,8 +7,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from custom_components.nl_rain_forecast.api.buienalarm import parse_buienalarm
 from custom_components.nl_rain_forecast.models import APIParseError
+from custom_components.nl_rain_forecast.sources.buienalarm.parser import parse_buienalarm
 
 from .conftest import load_fixture
 

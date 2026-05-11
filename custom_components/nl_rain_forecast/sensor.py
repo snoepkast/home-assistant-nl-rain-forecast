@@ -1,4 +1,4 @@
-"""Sensor platform: one rain-intensity sensor per data source per device."""
+"""Sensor platform: one rain-intensity sensor per registered source."""
 
 from __future__ import annotations
 
@@ -12,13 +12,8 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 
-from .const import (
-    ATTRIBUTION_BUIENALARM,
-    ATTRIBUTION_BUIENRADAR,
-    SOURCE_BUIENALARM,
-    SOURCE_BUIENRADAR,
-)
 from .entity import NLRainForecastEntity
+from .sources import SOURCES
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -27,37 +22,32 @@ if TYPE_CHECKING:
     from .coordinator import NLRainForecastCoordinator
     from .data import NLRainForecastConfigEntry
     from .models import Forecast
+    from .sources import Source
 
 
 @dataclass(frozen=True, kw_only=True, slots=True)
 class RainSensorDescription(SensorEntityDescription):
     """Sensor description carrying the source identifier."""
 
-    source: str
+    source_id: str
     attribution: str
 
 
-SENSOR_DESCRIPTIONS: tuple[RainSensorDescription, ...] = (
-    RainSensorDescription(
-        key="rain_forecast_buienradar",
-        translation_key="rain_forecast_buienradar",
-        source=SOURCE_BUIENRADAR,
-        attribution=ATTRIBUTION_BUIENRADAR,
+def _description_for(source: Source) -> RainSensorDescription:
+    return RainSensorDescription(
+        key=source.entity_key,
+        translation_key=source.entity_key,
+        source_id=source.id,
+        attribution=source.attribution,
         device_class=SensorDeviceClass.PRECIPITATION_INTENSITY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="mm/h",
         suggested_display_precision=1,
-    ),
-    RainSensorDescription(
-        key="rain_forecast_buienalarm",
-        translation_key="rain_forecast_buienalarm",
-        source=SOURCE_BUIENALARM,
-        attribution=ATTRIBUTION_BUIENALARM,
-        device_class=SensorDeviceClass.PRECIPITATION_INTENSITY,
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="mm/h",
-        suggested_display_precision=1,
-    ),
+    )
+
+
+SENSOR_DESCRIPTIONS: tuple[RainSensorDescription, ...] = tuple(
+    _description_for(source) for source in SOURCES
 )
 
 
@@ -94,7 +84,7 @@ class RainForecastSensor(NLRainForecastEntity, SensorEntity):
     ) -> None:
         super().__init__(coordinator, location_name=location_name)
         self.entity_description = description
-        self._attr_unique_id = f"{entry_id}_{description.source}"
+        self._attr_unique_id = f"{entry_id}_{description.source_id}"
         self._attr_attribution = description.attribution
 
     # ------------------------------------------------------------------
@@ -104,7 +94,7 @@ class RainForecastSensor(NLRainForecastEntity, SensorEntity):
     def _forecast(self) -> Forecast | None:
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(self.entity_description.source)
+        return self.coordinator.data.get(self.entity_description.source_id)
 
     # ------------------------------------------------------------------
     # SensorEntity overrides

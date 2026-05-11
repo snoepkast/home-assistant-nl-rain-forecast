@@ -23,13 +23,6 @@ NL_LAT_MAX: Final = 53.7
 NL_LON_MIN: Final = 3.2
 NL_LON_MAX: Final = 7.3
 
-# Source identifiers (also used as suffix in entity unique_ids).
-SOURCE_BUIENRADAR: Final = "buienradar"
-SOURCE_BUIENALARM: Final = "buienalarm"
-
-ATTRIBUTION_BUIENRADAR: Final = "Data provided by Buienradar"
-ATTRIBUTION_BUIENALARM: Final = "Data provided by Buienalarm"
-
 # HTTP
 HTTP_TIMEOUT_SECONDS: Final = 10
 USER_AGENT: Final = "home-assistant-nl-rain-forecast"

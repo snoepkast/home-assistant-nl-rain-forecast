@@ -8,11 +8,11 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from custom_components.nl_rain_forecast.api.buienradar import (
-    DUTCH_TZ,
-    parse_buienradar,
-)
 from custom_components.nl_rain_forecast.models import APIParseError
+from custom_components.nl_rain_forecast.sources.buienradar.const import (
+    TIMEZONE as DUTCH_TZ,
+)
+from custom_components.nl_rain_forecast.sources.buienradar.parser import parse_buienradar
 
 from .conftest import load_fixture
 

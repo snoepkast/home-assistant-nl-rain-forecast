@@ -9,20 +9,20 @@ import aiohttp
 import pytest
 from aioresponses import CallbackResult, aioresponses
 
-from custom_components.nl_rain_forecast.api.buienalarm import (
-    BUIENALARM_URL,
-    BuienalarmClient,
-)
-from custom_components.nl_rain_forecast.api.buienradar import (
-    BUIENRADAR_URL,
-    BuienradarClient,
-)
 from custom_components.nl_rain_forecast.models import (
     APIResponseError,
-    BuienalarmAPIError,
-    BuienradarAPIError,
     RainForecastError,
 )
+from custom_components.nl_rain_forecast.sources.buienalarm import (
+    BuienalarmAPIError,
+    BuienalarmClient,
+)
+from custom_components.nl_rain_forecast.sources.buienalarm.const import URL as BUIENALARM_URL
+from custom_components.nl_rain_forecast.sources.buienradar import (
+    BuienradarAPIError,
+    BuienradarClient,
+)
+from custom_components.nl_rain_forecast.sources.buienradar.const import URL as BUIENRADAR_URL
 
 from .conftest import load_fixture
 
@@ -129,10 +129,10 @@ async def test_buienalarm_passes_user_agent(session):
 
     with aioresponses() as mocked:
         mocked.get(BUIENALARM_PATTERN, callback=callback)
-        client = BuienalarmClient(session, version="9.9.9")
+        client = BuienalarmClient(session)
         await client.async_get_forecast(LAT, LON)
 
-    assert captured.get("User-Agent", "").startswith("home-assistant-nl-rain-forecast/")
+    assert captured.get("User-Agent") == "home-assistant-nl-rain-forecast"
 
 
 async def test_buienalarm_garbage_json_raises(session):

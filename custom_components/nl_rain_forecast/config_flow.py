@@ -10,7 +10,6 @@ from homeassistant.const import CONF_LATITUDE, CONF_LONGITUDE
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import BuienalarmClient, BuienradarClient
 from .const import (
     CONF_LOCATION_NAME,
     CONF_UPDATE_INTERVAL,
@@ -25,6 +24,7 @@ from .const import (
     NL_LON_MIN,
 )
 from .models import RainForecastError
+from .sources import SOURCES
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -185,18 +185,13 @@ def _user_schema(
 
 
 async def _probe_sources(hass: Any, lat: float, lon: float) -> dict[str, str]:
-    """Probe both upstream APIs; return ``{source: error}`` for any failures."""
+    """Probe every registered source; return ``{source_id: error}`` for failures."""
     session = async_get_clientsession(hass)
-    buienradar = BuienradarClient(session)
-    buienalarm = BuienalarmClient(session)
-
     errors: dict[str, str] = {}
-    try:
-        await buienradar.async_get_forecast(lat, lon)
-    except RainForecastError as exc:
-        errors["buienradar"] = str(exc)
-    try:
-        await buienalarm.async_get_forecast(lat, lon)
-    except RainForecastError as exc:
-        errors["buienalarm"] = str(exc)
+    for source in SOURCES:
+        client = source.client_factory(session)
+        try:
+            await client.async_get_forecast(lat, lon)
+        except RainForecastError as exc:
+            errors[source.id] = str(exc)
     return errors

@@ -1,12 +1,12 @@
 """
 DataUpdateCoordinator for NL Rain Forecast.
 
-Fetches both Buienradar and Buienalarm in parallel. A failure of one
-source does not prevent the other from succeeding — sensors for the
-failed source go unavailable while sensors for the surviving source
+Fetches every configured :class:`Source` in parallel. A failure of one
+source does not prevent the other(s) from succeeding — sensors for the
+failed source go unavailable while sensors for the surviving sources
 keep updating.
 
-Only when *both* sources fail is ``UpdateFailed`` raised, which makes
+Only when *every* source fails is ``UpdateFailed`` raised, which makes
 Home Assistant surface the integration as unavailable.
 """
 
@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN, LOGGER, SOURCE_BUIENALARM, SOURCE_BUIENRADAR
+from .const import DOMAIN, LOGGER
 from .models import Forecast, RainForecastError
 
 if TYPE_CHECKING:
@@ -27,28 +27,28 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
-    from .api import BuienalarmClient, BuienradarClient
+    from .sources import Source, SourceClient
 
 
 @dataclass(frozen=True, slots=True)
 class CoordinatorData:
-    """Result of one coordinator refresh."""
+    """
+    Result of one coordinator refresh.
 
-    buienradar: Forecast | None
-    buienalarm: Forecast | None
+    ``forecasts`` and ``errors`` are keyed by :attr:`Source.id`; missing
+    keys mean the corresponding source has never produced a result.
+    """
+
+    forecasts: dict[str, Forecast | None]
     errors: dict[str, str | None]
 
-    def get(self, source: str) -> Forecast | None:
-        """Return the Forecast for ``source`` or None if unavailable."""
-        if source == SOURCE_BUIENRADAR:
-            return self.buienradar
-        if source == SOURCE_BUIENALARM:
-            return self.buienalarm
-        return None
+    def get(self, source_id: str) -> Forecast | None:
+        """Return the Forecast for ``source_id`` or ``None`` if unavailable."""
+        return self.forecasts.get(source_id)
 
 
 class NLRainForecastCoordinator(DataUpdateCoordinator[CoordinatorData]):
-    """Coordinator that polls both rain APIs in parallel."""
+    """Coordinator that polls every configured source in parallel."""
 
     config_entry: ConfigEntry
 
@@ -57,8 +57,7 @@ class NLRainForecastCoordinator(DataUpdateCoordinator[CoordinatorData]):
         hass: HomeAssistant,
         *,
         config_entry: ConfigEntry,
-        buienradar: BuienradarClient,
-        buienalarm: BuienalarmClient,
+        clients: dict[Source, SourceClient],
         latitude: float,
         longitude: float,
         update_interval: timedelta,
@@ -70,37 +69,33 @@ class NLRainForecastCoordinator(DataUpdateCoordinator[CoordinatorData]):
             update_interval=update_interval,
             config_entry=config_entry,
         )
-        self._buienradar = buienradar
-        self._buienalarm = buienalarm
+        self._clients = clients
         self._latitude = latitude
         self._longitude = longitude
 
     async def _async_update_data(self) -> CoordinatorData:
-        """Fetch both sources concurrently and assemble a CoordinatorData."""
+        """Fetch every source concurrently and assemble a CoordinatorData."""
+        sources = list(self._clients)
         results = await asyncio.gather(
-            self._buienradar.async_get_forecast(self._latitude, self._longitude),
-            self._buienalarm.async_get_forecast(self._latitude, self._longitude),
+            *(
+                self._clients[source].async_get_forecast(self._latitude, self._longitude)
+                for source in sources
+            ),
             return_exceptions=True,
         )
 
-        buienradar_result = self._unwrap(results[0], SOURCE_BUIENRADAR)
-        buienalarm_result = self._unwrap(results[1], SOURCE_BUIENALARM)
+        forecasts: dict[str, Forecast | None] = {}
+        errors: dict[str, str | None] = {}
+        for source, result in zip(sources, results, strict=True):
+            forecast, error = self._unwrap(result, source.id)
+            forecasts[source.id] = forecast
+            errors[source.id] = error
 
-        data = CoordinatorData(
-            buienradar=buienradar_result[0],
-            buienalarm=buienalarm_result[0],
-            errors={
-                SOURCE_BUIENRADAR: buienradar_result[1],
-                SOURCE_BUIENALARM: buienalarm_result[1],
-            },
-        )
+        data = CoordinatorData(forecasts=forecasts, errors=errors)
 
-        if data.buienradar is None and data.buienalarm is None:
-            msg = (
-                "Both Buienradar and Buienalarm failed: "
-                f"buienradar={data.errors[SOURCE_BUIENRADAR]}, "
-                f"buienalarm={data.errors[SOURCE_BUIENALARM]}"
-            )
+        if all(forecast is None for forecast in data.forecasts.values()):
+            details = ", ".join(f"{sid}={err}" for sid, err in data.errors.items())
+            msg = f"All sources failed: {details}"
             raise UpdateFailed(msg)
 
         return data
@@ -108,14 +103,13 @@ class NLRainForecastCoordinator(DataUpdateCoordinator[CoordinatorData]):
     @staticmethod
     def _unwrap(
         result: Forecast | BaseException,
-        source: str,
+        source_id: str,
     ) -> tuple[Forecast | None, str | None]:
         """Convert a gather result into ``(forecast, error_message)``."""
         if isinstance(result, Forecast):
             return result, None
         if isinstance(result, RainForecastError):
-            LOGGER.warning("%s update failed: %s", source, result)
+            LOGGER.warning("%s update failed: %s", source_id, result)
             return None, str(result)
-        # Truly unexpected: log loud, surface the type so we don't silently swallow.
-        LOGGER.exception("%s update raised an unexpected error", source, exc_info=result)
+        LOGGER.exception("%s update raised an unexpected error", source_id, exc_info=result)
         return None, f"unexpected: {type(result).__name__}: {result}"
