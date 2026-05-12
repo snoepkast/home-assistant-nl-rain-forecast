@@ -25,9 +25,11 @@ This integration aims to be a clean, stable replacement for the popular
 
 ### HACS (custom repository)
 
-1. In HACS → Integrations → ⋮ → **Custom repositories**, add
-   `https://github.com/snoepkast/home-assistant-nl-rain-forecast` with
-   category **Integration**.
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=snoepkast&repository=home-assistant-nl-rain-forecast&category=integration)
+
+1. Click the badge above (or manually: HACS → Integrations → ⋮ → **Custom
+   repositories**, add `https://github.com/snoepkast/home-assistant-nl-rain-forecast`
+   with category **Integration**).
 2. Find **NL Rain Forecast** in the HACS list and install.
 3. Restart Home Assistant.
 4. Settings → Devices & Services → **Add Integration** → "NL Rain Forecast".
