@@ -60,6 +60,29 @@ and the test suite run on the host against `.venv/`. See
    ```
 5. CI must pass: `lint.yml`, `tests.yml`, hassfest, and HACS validation.
 
+## Cutting a release
+
+Releases are auto-published by `.github/workflows/release.yml` whenever a
+`v*` tag is pushed. HACS only recognises *releases* (not bare tags), so
+this is what users will see as the installable version.
+
+1. Bump the version in **both**:
+   - `custom_components/nl_rain_forecast/manifest.json` (`"version"`)
+   - `pyproject.toml` (`[project] version`)
+   The workflow refuses to publish if they disagree with the tag.
+2. Commit on `main` (e.g. `chore: bump version to v0.2.0`).
+3. Tag and push:
+   ```bash
+   git tag -a v0.2.0 -m "v0.2.0"
+   git push origin v0.2.0
+   ```
+4. The release workflow produces a GitHub release with auto-generated
+   notes (PRs merged since the previous tag).
+
+Pre-release tags (`-alpha`, `-beta`, `-rc`, or trailing `a1`/`b1`/etc.)
+are marked as pre-releases automatically and won't be picked up as the
+default install in HACS.
+
 ## Type-checking caveat
 
 `ty` is still in beta (0.0.x). If you hit a false positive or an unsupported

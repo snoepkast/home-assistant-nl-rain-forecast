@@ -1,0 +1,85 @@
+name: Release
+
+# Auto-publish a GitHub release whenever a `v*` tag is pushed.
+# HACS requires *releases* (not just tags), so this is what makes the
+# integration appear as a tagged version in HACS instead of falling back
+# to the default-branch HEAD.
+#
+# Cutting a release:
+#   1. Bump `version` in custom_components/nl_rain_forecast/manifest.json
+#      and `[project] version` in pyproject.toml. Commit on main.
+#   2. Tag and push:
+#        git tag -a v0.1.0 -m "v0.1.0"
+#        git push origin v0.1.0
+#   3. This workflow runs lint, tests, and hassfest+HACS validation on
+#      the tagged commit. If any fails, the release is not published.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  # Re-run the full CI suite against the tagged commit. These call the
+  # existing workflow files via `workflow_call`, so the logic stays in
+  # one place.
+  lint:
+    name: Lint
+    uses: ./.github/workflows/lint.yml
+
+  tests:
+    name: Tests
+    uses: ./.github/workflows/tests.yml
+
+  validate:
+    name: Hassfest + HACS
+    uses: ./.github/workflows/validate.yml
+
+  release:
+    name: Publish GitHub release
+    needs: [lint, tests, validate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history so auto-generated notes can diff
+
+      - name: Verify tag matches manifest.json + pyproject.toml versions
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          manifest_version=$(jq -r '.version' custom_components/nl_rain_forecast/manifest.json)
+          pyproject_version=$(grep -E '^version' pyproject.toml | head -1 | sed -E 's/version[[:space:]]*=[[:space:]]*"([^"]+)"/\1/')
+          echo "Tag:        $tag_version"
+          echo "manifest:   $manifest_version"
+          echo "pyproject:  $pyproject_version"
+          if [ "$tag_version" != "$manifest_version" ] || [ "$tag_version" != "$pyproject_version" ]; then
+            echo "::error::Tag/manifest/pyproject versions differ — bump them all before tagging."
+            exit 1
+          fi
+
+      - name: Detect pre-release
+        id: prerelease
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ -(alpha|beta|rc) ]] || [[ "$GITHUB_REF_NAME" =~ [ab][0-9]+$ ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(
+            "$GITHUB_REF_NAME"
+            --title "$GITHUB_REF_NAME"
+            --generate-notes
+          )
+          if [ "${{ steps.prerelease.outputs.prerelease }}" = "true" ]; then
+            args+=(--prerelease)
+          fi
+          gh release create "${args[@]}"

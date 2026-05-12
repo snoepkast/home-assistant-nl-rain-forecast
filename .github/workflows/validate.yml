@@ -10,6 +10,9 @@ on:
   pull_request:
     branches:
       - main
+  # Callable from release.yml so cutting a release re-runs hassfest +
+  # HACS validation on the tagged commit.
+  workflow_call:
 
 permissions: {}
 
