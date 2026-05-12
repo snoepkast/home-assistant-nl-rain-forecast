@@ -11,7 +11,7 @@ and verify behavior end-to-end before opening a PR or cutting a release.
 - [Exercising partial-failure paths](#exercising-partial-failure-paths)
 - [Verifying hassfest and HACS validation](#verifying-hassfest-and-hacs-validation)
 - [Enabling debug logs](#enabling-debug-logs)
-- [VS Code workflow](#vs-code-workflow)
+- [IDE workflows](#ide-workflows) — VS Code, PyCharm, JetBrains Gateway
 - [Troubleshooting test harness issues](#troubleshooting-test-harness-issues)
 
 ---
@@ -26,90 +26,155 @@ uv run pytest -x             # stop on first failure
 uv run pytest -xvs path/to/test_foo.py::test_bar   # one test, verbose
 ```
 
-`scripts/test` is a thin wrapper that always passes `--cov`. Coverage data
-lands in `.coverage`; an HTML report can be produced with
+Coverage data lands in `.coverage`; an HTML report can be produced with
 `uv run coverage html` (opens at `htmlcov/index.html`).
 
 Linting + type-checking are part of the pre-commit hook, but you can run
 them on demand:
 
 ```bash
-uv run ruff check .
-uv run ruff format --check .
+uv run ruff format .
+uv run ruff check . --fix
 uv run ty check
-# or all three:
-scripts/lint
 ```
 
 ---
 
 ## Running a development Home Assistant
 
-The repository ships with everything to boot a working Home Assistant
-instance that loads this integration. Two ways to do it:
+HA runs inside Docker using the official `ghcr.io/home-assistant/home-assistant`
+image — pinned to match the `homeassistant` version we develop against.
+No custom Dockerfile, no `uv` in the container; the image ships with HA
+and everything it needs. Your editor and the test suite run on the
+**host** — the container is only for HA itself.
 
-### Option A — devcontainer (recommended)
+### Prerequisites
 
-1. Open the repo in VS Code.
-2. Reopen in container (`Dev Containers: Reopen in Container`).
-3. On first open, `scripts/setup` runs and installs uv + the venv.
-4. From the integrated terminal:
-   ```bash
-   scripts/develop
-   ```
-5. VS Code will surface a notification when port 8123 is ready. Open it
-   to reach the HA onboarding screen.
+- **Docker** (Docker Desktop on macOS/Windows, or `docker.io` on Linux)
+- **uv** on the host, for tests/lint/IDE integration:
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
 
-### Option B — host machine
-
-You need Python 3.14.2+ and the system deps Home Assistant uses
-(`ffmpeg`, `libturbojpeg`, `libpcap`). On macOS:
+### Boot HA
 
 ```bash
-brew install ffmpeg jpeg-turbo libpcap
-curl -LsSf https://astral.sh/uv/install.sh | sh   # if not installed
-scripts/setup
-scripts/develop
+docker compose up
 ```
 
-HA boots at <http://localhost:8123> with the dev config at `config/` and
-this integration on the Python path via `PYTHONPATH`. The `config/` dir
-is `.gitignore`-d except for `configuration.yaml`, so restarting won't
-pollute commits.
+First run pulls the HA image (~400MB). Subsequent runs start in seconds.
+HA serves at <http://localhost:8123> once it's done booting (60-120s on
+a fresh state, ~10s once the seed fixture is committed — see below).
 
-### First-time onboarding
+`Ctrl-C` stops the stack. To remove the container:
 
-The dev HA has no saved state on first launch. Walk through the standard
-onboarding (create an owner account, set the home location). You only do
-this once — onboarding state persists across restarts in `config/`.
+```bash
+docker compose down
+```
+
+To pull a newer HA image after bumping the tag in `docker-compose.yml`:
+
+```bash
+docker compose pull
+docker compose up
+```
+
+### Layout
+
+- The integration source is bind-mounted **read-only** into the container
+  at `/config/custom_components/nl_rain_forecast/`. Edits on the host
+  appear instantly inside HA — reload the integration (Settings → Devices
+  & Services → ⋮ → Reload), or do a full HA restart via
+  `docker compose restart homeassistant`.
+- HA's config lives at `<repo>/config/` on the host. The committed seed
+  state (a dev user + onboarding completed + the integration pre-added)
+  is the minimum set of files under `config/.storage/` whitelisted in
+  `.gitignore`; everything else (`home-assistant_v2.db`, logs, frontend
+  cache, secrets) stays untracked.
+
+### Dev credentials
+
+The committed seed boots HA with one user:
+
+| Username | Password |
+|---|---|
+| `username` | `password` |
+
+This is a public-repo dev fixture, not a real credential. Don't reuse
+it anywhere it matters.
+
+### Generating / refreshing the seed fixture
+
+The seed state is committed once and reused. Regenerate when:
+
+- The pinned HA version changes (storage schemas may have migrated).
+- You want a different default location / integration config.
+
+To regenerate:
+
+1. Stop HA and delete the existing seed:
+   ```bash
+   docker compose down
+   rm -rf config/.storage/
+   ```
+2. Start HA:
+   ```bash
+   docker compose up
+   ```
+3. Walk through onboarding in the browser:
+   - User: `username` / password: `password`.
+   - Location: anywhere inside the NL bbox (e.g. Amsterdam 52.3676,
+     4.9041 — the integration's bbox check needs NL coords).
+   - Skip the integrations / "find devices" step.
+4. Add the **NL Rain Forecast** integration (Settings → Devices & Services
+   → Add Integration → search "NL Rain Forecast"). Use the same default
+   coords; accept the 5-min update interval.
+5. Stop HA: `docker compose down`.
+6. The committable subset is already filtered by `.gitignore` — just
+   `git status` and you'll see only the allowlisted `.storage/` files
+   ready to stage. Commit them.
+
+If you accidentally end up with non-allowlisted files staged
+(unlikely but possible), check `.gitignore` and reconcile.
 
 ---
 
 ## Manual integration test in the dev HA
 
-Once HA is up:
+With the committed seed fixture, HA boots already onboarded as
+`username` / `password` and with the integration pre-added at the
+default coords. Just log in and verify state.
 
-1. **Settings → Devices & Services → Add Integration**, search for
+If you want to re-add the integration from scratch (e.g. to exercise
+the config flow itself):
+
+1. Remove the existing entry: Settings → Devices & Services → NL Rain
+   Forecast → ⋮ → Delete.
+2. **Settings → Devices & Services → Add Integration**, search for
    "NL Rain Forecast".
-2. The config form should show:
+3. The config form should show:
    - Location name (default: `Home`)
    - Latitude / Longitude (defaults filled from your HA system config)
    - Update interval (5–60 min, default 5)
-3. Submit. The config flow probes both Buienradar and Buienalarm before
-   creating the entry; if the probe fails you'll see an error.
-4. On success you should see one **device** ("NL Rain Forecast: \<name\>")
-   with two **entities**:
+4. Submit. The config flow probes Buienradar, Buienalarm and Open-Meteo
+   before creating the entry; if the probe fails you'll see an error.
+5. On success you should see one **device** ("NL Rain Forecast: \<name\>")
+   with three **entities**:
    - `sensor.<name>_rain_forecast_buienradar`
    - `sensor.<name>_rain_forecast_buienalarm`
+   - `sensor.<name>_rain_forecast_open_meteo`
 
 ### What to check
 
-- **Developer Tools → States** — both entities should report a number
-  (mm/h, often `0.0` if it's not raining) plus all the expected attributes:
-  `forecast`, `peak_intensity`, `peak_time`, `total_precipitation`,
-  `next_rain_in_minutes`, `next_dry_in_minutes`, `source`, `last_updated`.
-- **`forecast` attribute** — should be a 24-25 element list of
-  `{time, value}` dicts spaced 5 minutes apart, covering ~2h.
+- **Developer Tools → States** — all three entities should report a
+  number (mm/h, often `0.0` if it's not raining) plus all the expected
+  attributes: `forecast`, `peak_intensity`, `peak_time`,
+  `total_precipitation`, `next_rain_in_minutes`, `next_dry_in_minutes`,
+  `source`, `last_updated`.
+- **`forecast` attribute** — should be a ~25 element list of
+  `{time, value}` dicts spaced 5 minutes apart, covering ~2h. The
+  Open-Meteo sensor is linearly interpolated from 15-min upstream data
+  but reads at the same 5-min cadence.
 - **`device_class`** is `precipitation_intensity`,
   **`state_class`** is `measurement`, **`unit_of_measurement`** is `mm/h`.
 - **Icon** should be `mdi:weather-pouring` when state > 0, otherwise
@@ -128,8 +193,9 @@ target:
     - sensor.home_rain_forecast_buienalarm
 ```
 
-Watch the log (`scripts/develop` runs HA with `--debug`); you should see
-`DEBUG` lines from `custom_components.nl_rain_forecast.api.*`.
+Watch the compose log (HA runs with `--debug` via the image's default
+entrypoint); you should see `DEBUG` lines from
+`custom_components.nl_rain_forecast.sources.*`.
 
 ### Reconfiguring the update interval
 
@@ -160,7 +226,7 @@ other down. To verify this manually:
 ### Block Buienradar with /etc/hosts (whole-host, blunt but effective)
 
 ```bash
-# /etc/hosts on the machine running HA (or inside the devcontainer)
+# /etc/hosts inside the container (`docker compose exec homeassistant bash`)
 127.0.0.1 gpsgadget.buienradar.nl
 ```
 
@@ -243,31 +309,65 @@ restart).
 
 ---
 
-## VS Code workflow
+## IDE workflows
 
-The devcontainer (and a similarly-configured host setup) gives you:
+Your editor runs on the **host**, against the host's `.venv/`. Only HA runs
+in Docker. That means no IDE-in-container plumbing — just a regular Python
+project setup pointed at `.venv/bin/python`.
 
-- **Run/debug tests from the gutter** — the Python extension picks up
-  `pyproject.toml`'s pytest config and shows ▶ icons next to each test.
-- **Coverage gutters** — install the
-  `ryanluker.vscode-coverage-gutters` extension (already in the
-  recommended list). After `uv run pytest --cov`, hit "Watch" in the
-  status bar to see line-by-line coverage hints inline.
-- **Ruff format-on-save** — already configured via
-  `editor.defaultFormatter = charliermarsh.ruff`.
-- **ty diagnostics** — Pylance is the default LSP; ty runs separately
-  via `scripts/lint` and CI. If you want ty inline, the
-  `ty-language-server` is an option but isn't required.
+### One-time host setup
 
-To debug a single test under `pytest`:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh   # install uv if missing
+uv sync                                            # build .venv from uv.lock
+uv run pre-commit install                          # register hooks
+```
+
+`.venv/` now contains Home Assistant and all dev tooling.
+
+### PyCharm
+
+1. Open the repo as a regular project (File → Open → pick the folder).
+2. **Settings → Project → Python Interpreter → Add Interpreter → Existing**.
+3. Point at `<repo>/.venv/bin/python`.
+4. **Settings → Tools → Python Integrated Tools → Testing → Default test
+   runner → pytest** (usually auto-detected from `[tool.pytest.ini_options]`).
+5. Install the **Ruff** plugin from the JetBrains Marketplace for
+   format-on-save. It uses the `ruff` binary in `.venv/bin/ruff` and
+   respects our `pyproject.toml` config.
+
+Run tests from the gutter ▶ icons. Right-click `tests/` → **Run 'pytest
+in tests'** runs everything.
+
+ty doesn't have a PyCharm plugin yet — run `uv run ty check` from the
+terminal or rely on CI.
+
+### VS Code
+
+1. Open the repo.
+2. The Python extension auto-detects `.venv/` and offers it as the
+   interpreter (or pick it via the status bar).
+3. Install the **Ruff** extension (`charliermarsh.ruff`) for
+   format-on-save.
+
+Run tests via the Testing sidebar or the ▶ gutter icons.
+
+### Quick test debugging (any IDE)
 
 ```bash
 uv run pytest tests/test_sensor.py::test_partial_failure_keeps_surviving_source_available -xvs
 ```
 
-For deeper debugging, set a breakpoint with `breakpoint()` and run with
-`uv run pytest --no-cov -s path/to/test`. PyCharm and VS Code's Python
-debugger both attach cleanly.
+For deeper debugging, drop a `breakpoint()` and run with
+`uv run pytest --no-cov -s path/to/test`. Both PyCharm's and VS Code's
+Python debugger attach cleanly via the standard pytest entry point.
+
+### Editing while HA is running in Docker
+
+The repo is bind-mounted into the container at `/app`, so any code edit
+on the host is visible inside HA immediately. Reload the integration via
+Settings → Devices & Services → ⋮ → **Reload** to pick up changes, or
+restart HA with `docker compose restart homeassistant`.
 
 ---
 

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "minor_version": 5,
+  "key": "core.config_entries",
+  "data": {
+    "entries": [
+      {"created_at":"2026-05-12T13:26:22.335715+00:00","data":{},"disabled_by":null,"discovery_keys":{},"domain":"sun","entry_id":"01KRE5VZBZ48Q070NV2QMSX3Q7","minor_version":1,"modified_at":"2026-05-12T13:26:22.335717+00:00","options":{},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"import","subentries":[],"title":"Sun","unique_id":null,"version":1},
+      {"created_at":"2026-05-12T13:26:23.039357+00:00","data":{},"disabled_by":null,"discovery_keys":{},"domain":"go2rtc","entry_id":"01KRE5W01ZRZR2V8GCBNVADK5Z","minor_version":1,"modified_at":"2026-05-12T13:26:23.039367+00:00","options":{},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"system","subentries":[],"title":"go2rtc","unique_id":null,"version":1},
+      {"created_at":"2026-05-12T13:26:23.047300+00:00","data":{},"disabled_by":null,"discovery_keys":{},"domain":"backup","entry_id":"01KRE5W027TB6JCRTCSWQY1F7G","minor_version":1,"modified_at":"2026-05-12T13:26:23.047304+00:00","options":{},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"system","subentries":[],"title":"Backup","unique_id":null,"version":1},
+      {"created_at":"2026-05-12T13:36:28.544205+00:00","data":{},"disabled_by":null,"discovery_keys":{},"domain":"shopping_list","entry_id":"01KRE6EFC0YGX74ZS0W5SJMQNS","minor_version":1,"modified_at":"2026-05-12T13:36:28.544209+00:00","options":{},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"onboarding","subentries":[],"title":"Shopping list","unique_id":"shopping_list","version":1},
+      {"created_at":"2026-05-12T13:36:28.613497+00:00","data":{},"disabled_by":null,"discovery_keys":{},"domain":"radio_browser","entry_id":"01KRE6EFE5NX494R7REKFXQKPV","minor_version":1,"modified_at":"2026-05-12T13:36:28.613499+00:00","options":{},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"onboarding","subentries":[],"title":"Radio Browser","unique_id":null,"version":1},
+      {"created_at":"2026-05-12T13:36:28.620780+00:00","data":{"language":"en","tld":"com"},"disabled_by":null,"discovery_keys":{},"domain":"google_translate","entry_id":"01KRE6EFECXP9ZH83M0YFR441Z","minor_version":1,"modified_at":"2026-05-12T13:36:28.620782+00:00","options":{},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"onboarding","subentries":[],"title":"Google Translate text-to-speech","unique_id":null,"version":1},
+      {"created_at":"2026-05-12T13:36:55.952516+00:00","data":{"latitude":52.3731339,"location_name":"Home","longitude":4.8903147},"disabled_by":null,"discovery_keys":{},"domain":"nl_rain_forecast","entry_id":"01KRE6FA4GAKQZFTK1RV5K3YB9","minor_version":1,"modified_at":"2026-05-12T13:36:55.952522+00:00","options":{"update_interval":5},"pref_disable_new_entities":false,"pref_disable_polling":false,"source":"user","subentries":[],"title":"Home","unique_id":"52.3731_4.8903","version":1}
+    ]
+  }
+}

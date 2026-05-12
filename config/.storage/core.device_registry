@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "minor_version": 12,
+  "key": "core.device_registry",
+  "data": {
+    "devices": [
+      {"area_id":null,"config_entries":["01KRE5VZBZ48Q070NV2QMSX3Q7"],"config_entries_subentries":{"01KRE5VZBZ48Q070NV2QMSX3Q7":[null]},"configuration_url":null,"connections":[],"created_at":"2026-05-12T13:26:22.337136+00:00","disabled_by":null,"entry_type":"service","hw_version":null,"id":"66c00fc41e16a98aa81da28735ab6854","identifiers":[["sun","01KRE5VZBZ48Q070NV2QMSX3Q7"]],"labels":[],"manufacturer":null,"model":null,"model_id":null,"modified_at":"2026-05-12T13:26:22.337162+00:00","name_by_user":null,"name":"Sun","primary_config_entry":"01KRE5VZBZ48Q070NV2QMSX3Q7","serial_number":null,"sw_version":null,"via_device_id":null},
+      {"area_id":null,"config_entries":["01KRE5W027TB6JCRTCSWQY1F7G"],"config_entries_subentries":{"01KRE5W027TB6JCRTCSWQY1F7G":[null]},"configuration_url":"homeassistant://config/backup","connections":[],"created_at":"2026-05-12T13:26:23.081249+00:00","disabled_by":null,"entry_type":"service","hw_version":null,"id":"a0509f2f7aa0fd1d3c5458220d518fd6","identifiers":[["backup","backup_manager"]],"labels":[],"manufacturer":"Home Assistant","model":"Home Assistant Backup","model_id":null,"modified_at":"2026-05-12T13:26:23.081290+00:00","name_by_user":null,"name":"Backup","primary_config_entry":"01KRE5W027TB6JCRTCSWQY1F7G","serial_number":null,"sw_version":"2026.3.2","via_device_id":null},
+      {"area_id":null,"config_entries":["01KRE6EFECXP9ZH83M0YFR441Z"],"config_entries_subentries":{"01KRE6EFECXP9ZH83M0YFR441Z":[null]},"configuration_url":null,"connections":[],"created_at":"2026-05-12T13:36:28.627987+00:00","disabled_by":null,"entry_type":"service","hw_version":null,"id":"f180a4e5d7228af3c63a7e46ebb66c18","identifiers":[["google_translate","01KRE6EFECXP9ZH83M0YFR441Z"]],"labels":[],"manufacturer":"Google","model":"Google Translate TTS","model_id":null,"modified_at":"2026-05-12T13:36:28.628004+00:00","name_by_user":null,"name":"Google Translate en com","primary_config_entry":"01KRE6EFECXP9ZH83M0YFR441Z","serial_number":null,"sw_version":null,"via_device_id":null},
+      {"area_id":null,"config_entries":["01KRE6FA4GAKQZFTK1RV5K3YB9"],"config_entries_subentries":{"01KRE6FA4GAKQZFTK1RV5K3YB9":[null]},"configuration_url":null,"connections":[],"created_at":"2026-05-12T13:36:56.038542+00:00","disabled_by":null,"entry_type":null,"hw_version":null,"id":"2e2a5d5bfcc584fb6aab2ffbfc2070c8","identifiers":[["nl_rain_forecast","01KRE6FA4GAKQZFTK1RV5K3YB9"]],"labels":[],"manufacturer":"NL Rain Forecast","model":"Rain nowcast","model_id":null,"modified_at":"2026-05-12T13:36:56.038614+00:00","name_by_user":null,"name":"Home","primary_config_entry":"01KRE6FA4GAKQZFTK1RV5K3YB9","serial_number":null,"sw_version":null,"via_device_id":null}
+    ],
+    "deleted_devices": []
+  }
+}

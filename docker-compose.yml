@@ -1,0 +1,12 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:2026.3.2
+    container_name: nl-rain-forecast-dev
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./config:/config
+      - ./custom_components/nl_rain_forecast:/config/custom_components/nl_rain_forecast:ro
+    environment:
+      - TZ=Europe/Amsterdam
+    stop_grace_period: 30s

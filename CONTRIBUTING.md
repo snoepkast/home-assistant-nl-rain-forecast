@@ -21,12 +21,6 @@ uv sync
 uv run pre-commit install
 ```
 
-Or run the bundled bootstrap:
-
-```bash
-scripts/setup
-```
-
 For a step-by-step walk-through of running tests and exercising the
 integration in a real Home Assistant instance, see
 [docs/TESTING.md](./docs/TESTING.md).
@@ -37,25 +31,33 @@ integration in a real Home Assistant instance, see
 |---|---|
 | `uv run pytest` | Run the full test suite |
 | `uv run pytest --cov` | … with coverage report |
-| `uv run ruff check` | Lint |
-| `uv run ruff format` | Format |
+| `uv run ruff format .` | Format |
+| `uv run ruff check . --fix` | Lint (auto-fix what's safe) |
 | `uv run ty check` | Type-check |
-| `scripts/lint` | format + lint --fix + ty in one go |
-| `scripts/test` | pytest with coverage |
-| `scripts/develop` | Boot a dev Home Assistant with this integration loaded |
+| `docker compose up` | Boot a dev Home Assistant with this integration loaded |
 
-## Devcontainer
+## Docker (for running HA)
 
-`.devcontainer.json` is set up for VS Code Dev Containers. It includes
-Python 3.14, uv, and the apt deps Home Assistant needs (ffmpeg, libturbojpeg,
-libpcap). On first open, `scripts/setup` runs automatically.
+HA runs in Docker via the official `ghcr.io/home-assistant/home-assistant`
+image (`docker-compose.yml` — no custom Dockerfile). The integration
+source is bind-mounted into the container; HA's config is seeded with a
+committed `username` / `password` user + the integration pre-added, so
+`docker compose up` boots straight to a working instance. Your editor
+and the test suite run on the host against `.venv/`. See
+[docs/TESTING.md](./docs/TESTING.md) for the full walk-through.
 
 ## Branching and PRs
 
 1. Branch off `main`.
 2. Keep changes focused — one concern per PR.
 3. Update tests for any behavior change.
-4. Run `scripts/lint` and `uv run pytest` before opening the PR.
+4. Before opening the PR:
+   ```bash
+   uv run ruff format --check .
+   uv run ruff check .
+   uv run ty check
+   uv run pytest
+   ```
 5. CI must pass: `lint.yml`, `tests.yml`, hassfest, and HACS validation.
 
 ## Type-checking caveat
