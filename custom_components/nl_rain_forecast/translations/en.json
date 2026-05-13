@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "NL Rain Forecast",
-                "description": "Configure a location for Dutch per-5-minute rain forecasts.",
+                "description": "Configure a location for Dutch per-5-minute rain forecasts. One sensor per source is created: Buienradar, Buienalarm, and Open-Meteo.",
                 "data": {
                     "location_name": "Location name",
                     "latitude": "Latitude",
@@ -14,7 +14,7 @@
         },
         "error": {
             "outside_netherlands": "Coordinates are outside the Netherlands.",
-            "api_unreachable": "One of the rain APIs could not be reached. Try again later.",
+            "api_unreachable": "One of the rain forecast APIs (Buienradar, Buienalarm, or Open-Meteo) could not be reached. Try again later.",
             "unknown": "Unknown error occurred."
         },
         "abort": {

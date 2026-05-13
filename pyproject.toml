@@ -1,7 +1,7 @@
 [project]
 name = "nl-rain-forecast"
 version = "0.1.0"
-description = "Home Assistant custom integration exposing Dutch per-5-minute rain nowcasts (Buienradar + Buienalarm) as sensors."
+description = "Home Assistant custom integration exposing Dutch per-5-minute rain nowcasts (Buienradar, Buienalarm, and Open-Meteo) as sensors."
 readme = "README.md"
 requires-python = ">=3.14.2"
 license = { text = "MIT" }

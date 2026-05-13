@@ -1,8 +1,8 @@
-# ApexCharts area chart of the per-5-minute rain forecast.
+# ApexCharts area chart of the per-5-minute rain forecast, overlaying
+# all three sources.
 #
-# Replace `sensor.home_rain_forecast_buienradar` with the entity_id for your
-# location. Switch to `..._buienalarm` (or duplicate the series) for the
-# Buienalarm forecast.
+# Replace `sensor.home_rain_forecast_*` with the entity_ids for your
+# location.
 #
 # Requires the apexcharts-card resource:
 #   https://github.com/RomRider/apexcharts-card
@@ -41,6 +41,18 @@ series:
     stroke_width: 2
     extend_to: false
     opacity: 0.4
+    data_generator: |
+      return entity.attributes.forecast.map(slot => [
+        new Date(slot.time).getTime(),
+        slot.value,
+      ]);
+  - entity: sensor.home_rain_forecast_open_meteo
+    name: Open-Meteo
+    yaxis_id: mmph
+    type: line
+    stroke_width: 2
+    curve: smooth
+    extend_to: false
     data_generator: |
       return entity.attributes.forecast.map(slot => [
         new Date(slot.time).getTime(),

@@ -16,8 +16,8 @@ This integration aims to be a clean, stable replacement for the popular
 [neerslag-app integration](https://github.com/aex351/home-assistant-neerslag-app):
 
 - No bundled frontend resources, no race conditions at dashboard render
-- Two sources always active (Buienradar + Buienalarm) — partial failures don't
-  take the whole integration down
+- Three sources always active (Buienradar + Buienalarm + Open-Meteo) —
+  partial failures don't take the whole integration down
 - Config flow only — no YAML
 - Async, typed, tested
 
@@ -74,16 +74,26 @@ Three sensors per configured location:
 | `total_precipitation` | `float` | Total expected rainfall in mm over the window |
 | `next_rain_in_minutes` | `int \| null` | Minutes until rain starts; `null` if currently raining or no rain expected |
 | `next_dry_in_minutes` | `int \| null` | Minutes until rain stops; `null` if currently dry |
-| `source` | `str` | `"buienradar"` or `"buienalarm"` |
+| `source` | `str` | `"buienradar"`, `"buienalarm"`, or `"open_meteo"` |
 | `last_updated` | `ISO8601` | When the upstream data was fetched |
 
 `device_class = precipitation_intensity`, `state_class = measurement`,
 `unit_of_measurement = mm/h`. The icon switches between `mdi:weather-pouring`
 and `mdi:weather-cloudy` based on the current state.
 
-If one source temporarily fails, only that source's sensor goes
-**unavailable**; the other continues to update. Both have to fail for the
-integration to report itself as unavailable.
+If one or two sources temporarily fail, only those sensors go
+**unavailable**; the surviving source(s) keep updating. All three have
+to fail for the integration to report itself as unavailable.
+
+### A note on Open-Meteo
+
+Open-Meteo is global; for the Netherlands it pipes the **KNMI Harmonie
+AROME 2 km** model — the same model behind Buienradar and Buienalarm,
+but accessed directly rather than via a rebroadcaster. Native cadence
+is 15 minutes; we linearly interpolate between consecutive 15-min
+boundary values to produce three 5-min sub-slots per gap so the sensor
+aligns with the cadence of the other two. The interpolated 5-min values
+are a visual alignment, not new model information.
 
 ## Visualization
 
@@ -98,13 +108,15 @@ See [docs/examples/](./docs/examples/) for ready-to-paste cards:
 
 ## Troubleshooting
 
-- **"Coordinates are outside the Netherlands"** — both Buienradar and
-  Buienalarm only cover the Netherlands. Pick a location inside the bbox.
+- **"Coordinates are outside the Netherlands"** — Buienradar and Buienalarm
+  only cover the Netherlands, so the integration enforces an NL bbox even
+  though Open-Meteo would technically work elsewhere. Pick a location
+  inside the bbox.
 - **One source `unavailable` after a while** — check logs for upstream errors;
   this integration logs at `WARNING` when an API call fails.
 - **No update at startup** — the first refresh is awaited during setup; if
-  *both* sources fail the integration won't load. Re-add the entry once the
-  upstream is back, or check connectivity.
+  *all three* sources fail the integration won't load. Re-add the entry
+  once at least one upstream is back, or check connectivity.
 - **Enable debug logging** for full request/parse traces:
   ```yaml
   logger:
@@ -132,9 +144,11 @@ uv run ty check
 
 ## Acknowledgements
 
-Data is provided by [Buienradar](https://www.buienradar.nl/) and
-[Buienalarm](https://www.buienalarm.nl/). This integration is unaffiliated
-with either service. Credit also to
+Data is provided by [Buienradar](https://www.buienradar.nl/),
+[Buienalarm](https://www.buienalarm.nl/), and [Open-Meteo](https://open-meteo.com/)
+(which for the Netherlands serves [KNMI](https://www.knmi.nl/) Harmonie
+AROME model output). This integration is unaffiliated with any of those
+services. Credit also to
 [ludeeus/integration_blueprint](https://github.com/ludeeus/integration_blueprint)
 for the project scaffolding and to
 [aex351/home-assistant-neerslag-app](https://github.com/aex351/home-assistant-neerslag-app)

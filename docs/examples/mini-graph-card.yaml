@@ -22,3 +22,5 @@ entities:
     name: Buienradar
   - entity: sensor.home_rain_forecast_buienalarm
     name: Buienalarm
+  - entity: sensor.home_rain_forecast_open_meteo
+    name: Open-Meteo

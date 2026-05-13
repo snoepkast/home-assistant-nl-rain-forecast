@@ -2,8 +2,8 @@
 NL Rain Forecast integration.
 
 Custom integration that exposes Dutch per-5-minute rain nowcast data
-from multiple sources (currently Buienradar + Buienalarm) as Home
-Assistant sensors.
+from multiple sources (currently Buienradar, Buienalarm, and Open-Meteo)
+as Home Assistant sensors.
 
 https://github.com/snoepkast/home-assistant-nl-rain-forecast
 """

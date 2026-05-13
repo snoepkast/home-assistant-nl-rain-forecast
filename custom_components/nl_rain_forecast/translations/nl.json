@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "NL Rain Forecast",
-                "description": "Configureer een locatie voor Nederlandse 5-minuten regenvoorspellingen.",
+                "description": "Configureer een locatie voor Nederlandse 5-minuten regenvoorspellingen. Er wordt één sensor per bron aangemaakt: Buienradar, Buienalarm en Open-Meteo.",
                 "data": {
                     "location_name": "Naam locatie",
                     "latitude": "Breedtegraad",
@@ -14,7 +14,7 @@
         },
         "error": {
             "outside_netherlands": "De coördinaten liggen buiten Nederland.",
-            "api_unreachable": "Een van de regen-API's is niet bereikbaar. Probeer het later opnieuw.",
+            "api_unreachable": "Een van de regenvoorspelling-API's (Buienradar, Buienalarm of Open-Meteo) is niet bereikbaar. Probeer het later opnieuw.",
             "unknown": "Er is een onbekende fout opgetreden."
         },
         "abort": {
