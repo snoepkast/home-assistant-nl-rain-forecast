@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "minor_version": 1,
+    "key": "lovelace_resources",
+    "data": {
+        "items": [
+            {
+                "id": "01KRF000000000000APEXCHARTS",
+                "type": "module",
+                "url": "/local/apexcharts-card.js"
+            }
+        ]
+    }
+}

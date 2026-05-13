@@ -1,0 +1,90 @@
+# YAML-mode dashboard registered via `lovelace.dashboards.rain-forecast`
+# in configuration.yaml. Visible in HA's sidebar as "Rain Forecast".
+#
+# Uses apexcharts-card (RomRider) — vendored into /config/www/ on first
+# boot by the `seed` service in docker-compose.yml.
+#
+# Entity ids assume the integration was configured with location name
+# "Home" (the committed seed). Adjust as needed for other locations.
+
+title: Rain Forecast
+views:
+  - title: Forecast
+    icon: mdi:weather-pouring
+    cards:
+      - type: markdown
+        content: |
+          {% set s = states.sensor.home_rain_forecast_buienradar %}
+          {% if s is none or s.state in ['unavailable', 'unknown'] %}
+            🌫️ Geen regenvoorspelling beschikbaar.
+          {% elif s.attributes.next_dry_in_minutes is not none %}
+            🌧️ Het regent nog **{{ s.attributes.next_dry_in_minutes }} min**
+            (nu {{ s.state }} mm/u).
+          {% elif s.attributes.next_rain_in_minutes is not none %}
+            ☔ Het regent over **{{ s.attributes.next_rain_in_minutes }} min**
+            (piek {{ s.attributes.peak_intensity }} mm/u).
+          {% else %}
+            ☀️ Het blijft droog de komende 2 uur.
+          {% endif %}
+
+      - type: custom:apexcharts-card
+        header:
+          title: Per-5-min rain forecast
+          show: true
+          show_states: true
+        graph_span: 2h
+        span:
+          start: minute
+        yaxis:
+          - id: mmph
+            min: 0
+            apex_config:
+              forceNiceScale: true
+              title:
+                text: mm/h
+        series:
+          - entity: sensor.home_rain_forecast_buienradar
+            name: Buienradar
+            yaxis_id: mmph
+            type: area
+            stroke_width: 2
+            extend_to: false
+            data_generator: |
+              return entity.attributes.forecast.map(slot => [
+                new Date(slot.time).getTime(),
+                slot.value,
+              ]);
+          - entity: sensor.home_rain_forecast_buienalarm
+            name: Buienalarm
+            yaxis_id: mmph
+            type: area
+            stroke_width: 2
+            extend_to: false
+            opacity: 0.4
+            data_generator: |
+              return entity.attributes.forecast.map(slot => [
+                new Date(slot.time).getTime(),
+                slot.value,
+              ]);
+          - entity: sensor.home_rain_forecast_open_meteo
+            name: Open-Meteo
+            yaxis_id: mmph
+            type: line
+            stroke_width: 2
+            curve: smooth
+            extend_to: false
+            data_generator: |
+              return entity.attributes.forecast.map(slot => [
+                new Date(slot.time).getTime(),
+                slot.value,
+              ]);
+
+      - type: entities
+        title: Current intensity (mm/h)
+        entities:
+          - entity: sensor.home_rain_forecast_buienradar
+            name: Buienradar
+          - entity: sensor.home_rain_forecast_buienalarm
+            name: Buienalarm
+          - entity: sensor.home_rain_forecast_open_meteo
+            name: Open-Meteo

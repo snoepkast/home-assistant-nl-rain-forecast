@@ -10,3 +10,16 @@ logger:
   default: info
   logs:
     custom_components.nl_rain_forecast: debug
+
+# https://www.home-assistant.io/lovelace/dashboards/
+# The main dashboard stays in storage mode (UI-editable). We add one
+# YAML-managed dashboard so the integration ships with a working
+# ApexCharts view out of the box.
+lovelace:
+  dashboards:
+    rain-forecast:
+      mode: yaml
+      title: Rain Forecast
+      icon: mdi:weather-pouring
+      show_in_sidebar: true
+      filename: dashboards/rain-forecast.yaml

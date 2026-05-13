@@ -20,23 +20,10 @@ htmlcov/
 .venv
 .python-version
 
-
-# Home Assistant dev config
-#
-# Ignore everything in `config/` by default, then explicitly un-ignore the
-# minimal "seed" state that boots HA into a usable dev environment:
-# - configuration.yaml (main config)
-# - .storage/auth + auth_provider.homeassistant (dev user `username`/`password`)
-# - .storage/onboarding (skips the onboarding wizard)
-# - .storage/core.config (location, name, units)
-# - .storage/core.config_entries (our integration pre-added)
-# - .storage/core.device_registry + core.entity_registry (entities wired up)
-#
-# Everything else under config/ (logs, the recorder SQLite, frontend
-# cache, secrets, runtime detritus) stays untracked.
 config/*
 !config/configuration.yaml
 !config/.storage/
+!config/dashboards/
 config/.storage/*
 !config/.storage/auth
 !config/.storage/auth_provider.homeassistant
@@ -45,3 +32,4 @@ config/.storage/*
 !config/.storage/core.config_entries
 !config/.storage/core.device_registry
 !config/.storage/core.entity_registry
+!config/.storage/lovelace_resources

@@ -62,35 +62,54 @@ and everything it needs. Your editor and the test suite run on the
 docker compose up
 ```
 
-First run pulls the HA image (~400MB). Subsequent runs start in seconds.
-HA serves at <http://localhost:8123> once it's done booting (60-120s on
-a fresh state, ~10s once the seed fixture is committed — see below).
+First run builds the image (extends `ghcr.io/home-assistant/home-assistant`,
+adds the seed + apexcharts-card.js — ~2 min). Subsequent runs start in
+seconds. HA serves at <http://localhost:8123> once it's done booting
+(~10s with the seed already in place).
 
-`Ctrl-C` stops the stack. To remove the container:
+`Ctrl-C` stops the stack. To remove the container (keeps state volume):
 
 ```bash
 docker compose down
 ```
 
-To pull a newer HA image after bumping the tag in `docker-compose.yml`:
+To completely reset HA state (drops the volume too):
 
 ```bash
-docker compose pull
+docker compose down -v
+```
+
+To pull a newer base HA image and rebuild:
+
+```bash
+# Edit FROM line in Dockerfile to bump the HA version, then:
+docker compose build --pull
+docker compose down -v
 docker compose up
 ```
 
 ### Layout
 
-- The integration source is bind-mounted **read-only** into the container
-  at `/config/custom_components/nl_rain_forecast/`. Edits on the host
-  appear instantly inside HA — reload the integration (Settings → Devices
-  & Services → ⋮ → Reload), or do a full HA restart via
+- The **dev seed** lives at `<repo>/config/` (committed to git). It's
+  the minimum set of files HA needs to boot ready-to-use: a YAML
+  dashboard, a `dev` user, onboarding marked done, the integration
+  pre-added, and the matching device/entity registries.
+- `<repo>/Dockerfile` extends the official HA image, `ADD`s
+  `apexcharts-card.js` into `/config/www/`, and `COPY`s the dev seed
+  into `/config/`. Build context filtering via `.dockerignore` ensures
+  only allowlisted seed files reach the image.
+- The **runtime** HA state lives in a Docker named volume
+  (`ha-config`). Docker auto-populates it from the image's `/config/`
+  on first run, then persists across container restarts (recorder DB,
+  refresh tokens, logs, etc. all survive).
+- The integration source is bind-mounted **read-only** at
+  `/config/custom_components/nl_rain_forecast/`. Edits on the host
+  appear instantly inside HA — reload the integration (Settings →
+  Devices & Services → ⋮ → Reload), or do a full restart with
   `docker compose restart homeassistant`.
-- HA's config lives at `<repo>/config/` on the host. The committed seed
-  state (a dev user + onboarding completed + the integration pre-added)
-  is the minimum set of files under `config/.storage/` whitelisted in
-  `.gitignore`; everything else (`home-assistant_v2.db`, logs, frontend
-  cache, secrets) stays untracked.
+- **`git status` cannot be polluted by HA**: the committed `./config/`
+  is read-only input to the build; HA only ever writes to the named
+  volume, which lives in Docker's storage area, not the repo.
 
 ### Dev credentials
 
@@ -103,39 +122,69 @@ The committed seed boots HA with one user:
 This is a public-repo dev fixture, not a real credential. Don't reuse
 it anywhere it matters.
 
-### Generating / refreshing the seed fixture
+### Starting fresh
 
-The seed state is committed once and reused. Regenerate when:
+Drop the runtime volume and start over:
+
+```bash
+docker compose down -v
+docker compose up
+```
+
+The image's baked seed re-populates the new volume on first mount. The
+committed `./config/` is untouched.
+
+### Inspecting HA state from the host
+
+HA's runtime state lives in the `ha-config` Docker volume, not on the
+host filesystem. To peek at a file:
+
+```bash
+docker compose exec homeassistant cat /config/.storage/core.config
+# or
+docker compose cp homeassistant:/config/.storage/core.config /tmp/core.config
+```
+
+### Refreshing the committed seed
+
+Run when:
 
 - The pinned HA version changes (storage schemas may have migrated).
 - You want a different default location / integration config.
+- You added something via the UI (e.g. a dashboard) and want it in the
+  committed seed.
 
-To regenerate:
+Workflow:
 
-1. Stop HA and delete the existing seed:
+1. Start fresh:
    ```bash
-   docker compose down
-   rm -rf config/.storage/
-   ```
-2. Start HA:
-   ```bash
+   docker compose down -v
    docker compose up
    ```
-3. Walk through onboarding in the browser:
+2. In the browser at <http://localhost:8123>, walk through onboarding:
    - User: `username` / password: `password`.
-   - Location: anywhere inside the NL bbox (e.g. Amsterdam 52.3676,
-     4.9041 — the integration's bbox check needs NL coords).
+   - Location: inside the NL bbox (e.g. Amsterdam 52.3676, 4.9041).
    - Skip the integrations / "find devices" step.
-4. Add the **NL Rain Forecast** integration (Settings → Devices & Services
-   → Add Integration → search "NL Rain Forecast"). Use the same default
-   coords; accept the 5-min update interval.
-5. Stop HA: `docker compose down`.
-6. The committable subset is already filtered by `.gitignore` — just
-   `git status` and you'll see only the allowlisted `.storage/` files
-   ready to stage. Commit them.
-
-If you accidentally end up with non-allowlisted files staged
-(unlikely but possible), check `.gitignore` and reconcile.
+3. Add the **NL Rain Forecast** integration (Settings → Devices &
+   Services → Add Integration → search "NL Rain Forecast"). Accept
+   defaults.
+4. Copy the allowlisted files out of the running container back into
+   the committed seed:
+   ```bash
+   for f in auth auth_provider.homeassistant onboarding core.config \
+            core.config_entries core.device_registry core.entity_registry \
+            lovelace_resources; do
+     docker compose cp homeassistant:/config/.storage/$f config/.storage/$f
+   done
+   ```
+5. `git status` shows only the allowlisted seed files. Verify the
+   diff, then rebuild and re-test:
+   ```bash
+   docker compose down -v
+   docker compose build
+   docker compose up
+   ```
+6. Commit.
 
 ---
 
@@ -144,6 +193,16 @@ If you accidentally end up with non-allowlisted files staged
 With the committed seed fixture, HA boots already onboarded as
 `username` / `password` and with the integration pre-added at the
 default coords. Just log in and verify state.
+
+Sidebar should show a **Rain Forecast** dashboard (YAML-managed, defined
+in `config/dashboards/rain-forecast.yaml`) with:
+
+- A markdown card summarising current rain status in Dutch
+- An ApexCharts panel overlaying all three sources' 2h forecast
+- A small entities card listing the current intensity per source
+
+This is the fastest way to eyeball that all three sources are producing
+sensible data: open the dashboard, see three lines on the chart.
 
 If you want to re-add the integration from scratch (e.g. to exercise
 the config flow itself):

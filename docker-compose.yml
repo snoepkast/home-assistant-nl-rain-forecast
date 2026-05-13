@@ -1,11 +1,13 @@
 services:
   homeassistant:
-    image: ghcr.io/home-assistant/home-assistant:2026.3.2
+    build: .
+    image: nl-rain-forecast-dev
     container_name: nl-rain-forecast-dev
     ports:
       - "8123:8123"
     volumes:
-      - ./config:/config
+      # For a new seed, remove this comment.
+      # - ./config:/config
       - ./custom_components/nl_rain_forecast:/config/custom_components/nl_rain_forecast:ro
     environment:
       - TZ=Europe/Amsterdam
