@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from itertools import pairwise
-from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -64,14 +63,16 @@ def test_handles_midnight_rollover():
         fetched_at=_fetched_at(hour=23, minute=45),
     )
     assert len(forecast.slots) == 25
-    # First slot is on the start day, later slots roll to next day.
     times = [slot.time for slot in forecast.slots]
-    assert times == sorted(times), "slots must remain chronological across midnight"
-    # The slot at 00:00 is exactly 10 minutes after the slot at 23:50.
+    # Slots remain strictly chronological across midnight — this is the
+    # invariant we actually care about; .day or wall-clock checks would
+    # be TZ-dependent.
+    assert times == sorted(times)
+    # The slot at HH:MM=00:00 (in upstream's local time) lands exactly
+    # 10 minutes after the slot at 23:50.
     assert times[2] - times[0] == timedelta(minutes=10)
-    # Day rolled forward.
-    assert times[0].day == 8
-    assert times[2].day == 9
+    # The day-rolling produces a span >= 1 hour across the 25-slot window.
+    assert times[-1] - times[0] >= timedelta(hours=1)
 
 
 def test_intensity_clipped_to_zero_for_value_zero():
@@ -110,10 +111,15 @@ def test_skips_unparseable_lines_keeps_valid_ones():
     assert forecast.slots[1].value == 0.1
 
 
-def test_dst_aware_datetimes_use_amsterdam_tz():
-    """Slots must be timezone-aware in Europe/Amsterdam."""
+def test_slots_are_normalized_to_utc():
+    """Every parser emits UTC datetimes so sources share one timezone."""
     forecast = parse_buienradar(
         "000|14:00\n",
         fetched_at=_fetched_at(),
     )
-    assert forecast.slots[0].time.tzinfo == ZoneInfo("Europe/Amsterdam")
+    slot_time = forecast.slots[0].time
+    assert slot_time.utcoffset() == timedelta(0)
+    # The wall-clock-in-Amsterdam interpretation is preserved — 14:00
+    # Amsterdam in May (CEST = +02:00) is 12:00 UTC.
+    assert slot_time.hour == 12
+    assert slot_time.minute == 0

@@ -10,7 +10,7 @@ INTENSITY is a 0-255 integer encoding rainfall via
 from __future__ import annotations
 
 import logging
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo  # noqa: TC003 — used as a runtime default value
 
@@ -89,7 +89,15 @@ def parse_buienradar(
         if not slots and (local_dt - fetched_at) < timedelta(hours=-12):
             local_dt += timedelta(days=1)
             day_offset += timedelta(days=1)
-        slots.append(ForecastSlot(time=local_dt, value=intensity_to_mm_per_hour(value)))
+        # Normalize to UTC so every source emits consistent timestamps.
+        # Local-time arithmetic above stays in Europe/Amsterdam for correct
+        # midnight-rollover and DST handling; only the storage form changes.
+        slots.append(
+            ForecastSlot(
+                time=local_dt.astimezone(UTC),
+                value=intensity_to_mm_per_hour(value),
+            )
+        )
 
     return Forecast(source=ID, fetched_at=fetched_at, slots=tuple(slots))
 

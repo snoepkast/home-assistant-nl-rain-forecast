@@ -35,7 +35,9 @@ class APIParseError(RainForecastError):
 # Data classes
 # ---------------------------------------------------------------------------
 
-_MIN_SLOTS_FOR_INTEGRATION = 2
+# Minimum slots needed to *numerically integrate* mm/h over time deltas.
+# Nothing to do with the count of upstream sources.
+_MIN_SLOTS_FOR_NUMERICAL_INTEGRAL = 2
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,7 +102,7 @@ class Forecast:
         reuses the previous interval. Returns 0.0 for empty/single-slot
         forecasts where integration is not meaningful.
         """
-        if len(self.slots) < _MIN_SLOTS_FOR_INTEGRATION:
+        if len(self.slots) < _MIN_SLOTS_FOR_NUMERICAL_INTEGRAL:
             return 0.0
         total_mm = 0.0
         for i, slot in enumerate(self.slots):

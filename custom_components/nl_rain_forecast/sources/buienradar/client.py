@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 import aiohttp
 
 from ...const import HTTP_TIMEOUT_SECONDS, USER_AGENT
 from ...models import APIParseError, APIResponseError, APITimeoutError
-from .const import TIMEZONE, URL
+from .const import URL
 from .errors import BuienradarAPIError
 from .parser import parse_buienradar
 
@@ -46,7 +46,7 @@ class BuienradarClient:
             msg = f"Buienradar transport error: {exc}"
             raise BuienradarAPIError(msg) from exc
 
-        fetched_at = datetime.now(TIMEZONE)
+        fetched_at = datetime.now(UTC)
         try:
             return parse_buienradar(payload, fetched_at=fetched_at)
         except APIParseError as exc:
