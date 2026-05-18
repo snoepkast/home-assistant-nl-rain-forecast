@@ -32,4 +32,6 @@ config/.storage/*
 !config/.storage/core.config_entries
 !config/.storage/core.device_registry
 !config/.storage/core.entity_registry
+!config/.storage/frontend.system_data
+!config/.storage/frontend.user_data_0338c13e48124c518235123953e321bc
 !config/.storage/lovelace_resources

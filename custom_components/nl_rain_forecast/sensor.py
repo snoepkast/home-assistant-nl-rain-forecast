@@ -92,9 +92,20 @@ class RainForecastSensor(NLRainForecastEntity, SensorEntity):
     # ------------------------------------------------------------------
 
     def _forecast(self) -> Forecast | None:
+        """
+        Return the forward-aligned 2-hour forecast for this source.
+
+        Each upstream source has its own native start offset (Buienradar
+        starts at the next 5-min mark, Buienalarm at its server's
+        timestamp, Open-Meteo at the next 15-min mark). Aligning to
+        ``floor(now, 5min)..+2h`` here makes all sensors share a common
+        forward window, so dashboards overlay cleanly and the sensor
+        state always reflects "right now or just ahead", never the past.
+        """
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(self.entity_description.source_id)
+        raw = self.coordinator.data.get(self.entity_description.source_id)
+        return raw.in_forward_window() if raw else None
 
     # ------------------------------------------------------------------
     # SensorEntity overrides
@@ -102,8 +113,9 @@ class RainForecastSensor(NLRainForecastEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        """Available when both the coordinator and this source have data."""
-        return super().available and self._forecast() is not None
+        """Available when the coordinator has data AND the aligned forecast has slots."""
+        forecast = self._forecast()
+        return super().available and forecast is not None and bool(forecast.slots)
 
     @property
     def native_value(self) -> float | None:
