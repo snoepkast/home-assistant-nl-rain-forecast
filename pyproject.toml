@@ -17,7 +17,7 @@ dev = [
     "pytest-homeassistant-custom-component>=0.13.190",
     "aioresponses>=0.7.7",
     "ruff>=0.15.13",
-    "ty>=0.0.1a1",
+    "ty>=0.0.37",
     "pre-commit>=4.0",
 ]
 
