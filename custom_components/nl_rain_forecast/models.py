@@ -39,6 +39,25 @@ class APIParseError(RainForecastError):
 # Nothing to do with the count of upstream sources.
 _MIN_SLOTS_FOR_NUMERICAL_INTEGRAL = 2
 
+# Default forward-looking forecast window: the next 2 hours, sampled on
+# 5-minute boundaries. Used by Forecast.in_forward_window().
+_DEFAULT_FORECAST_WINDOW = timedelta(hours=2)
+_DEFAULT_FORECAST_INTERVAL_MINUTES = 5
+
+
+def _floor_to_minute_boundary(dt: datetime, interval_minutes: int) -> datetime:
+    """
+    Round ``dt`` DOWN to the nearest ``interval_minutes`` mark.
+
+    Preserves ``tzinfo``. Used to align disparate-cadence forecasts to a
+    common forward window starting at the most recent 5-minute boundary.
+    """
+    return dt.replace(
+        minute=(dt.minute // interval_minutes) * interval_minutes,
+        second=0,
+        microsecond=0,
+    )
+
 
 @dataclass(frozen=True, slots=True)
 class ForecastSlot:
@@ -145,6 +164,30 @@ class Forecast:
                 delta = slot.time - reference
                 return max(0, int(delta.total_seconds() // 60))
         return None
+
+    def in_forward_window(
+        self,
+        *,
+        now: datetime | None = None,
+        window: timedelta = _DEFAULT_FORECAST_WINDOW,
+        interval_minutes: int = _DEFAULT_FORECAST_INTERVAL_MINUTES,
+    ) -> Forecast:
+        """
+        Return a copy of this Forecast trimmed to a forward-looking window.
+
+        The window starts at ``floor(now, interval_minutes)`` and extends
+        ``window`` ahead. Past slots are dropped. Each upstream source has
+        its own native start offset, so passing every Forecast through
+        this method before display gives all sensors a common 5-min-
+        aligned 2-hour window starting at the most recent 5-min mark.
+
+        ``now`` defaults to :attr:`fetched_at`.
+        """
+        anchor = now if now is not None else self.fetched_at
+        start = _floor_to_minute_boundary(anchor, interval_minutes)
+        end = start + window
+        aligned = tuple(s for s in self.slots if start <= s.time <= end)
+        return Forecast(source=self.source, fetched_at=self.fetched_at, slots=aligned)
 
 
 # ---------------------------------------------------------------------------

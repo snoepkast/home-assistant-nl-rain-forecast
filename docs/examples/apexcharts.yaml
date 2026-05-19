@@ -16,10 +16,13 @@ graph_span: 2h
 span:
   start: minute
 yaxis:
+  # Fixed scale so light rain doesn't auto-scale to full chart height.
   - id: mmph
     min: 0
+    max: 10
+    decimals: 1
     apex_config:
-      forceNiceScale: true
+      forceNiceScale: false
       title:
         text: mm/h
 series:
